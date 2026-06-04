@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="sidepanel.css">
+  <title>Manualize</title>
+</head>
+<body>
+
+  <!-- Hidden file input for import -->
+  <input type="file" id="importFileInput" accept=".json,.manualize" hidden>
+
+  <!-- ═══════════ EDITOR VIEW ═══════════ -->
+  <div id="editorView">
+    <!-- HEADER -->
+    <header id="header">
+      <div class="header-brand">
+        <svg class="logo-icon" width="26" height="26" viewBox="0 0 26 26" fill="none">
+          <rect width="26" height="26" rx="6" fill="url(#mnlLogoGrad)"/>
+          <path d="M8 10.5L10.5 13L8 15.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="12" y1="10" x2="18" y2="10" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="12" y1="13" x2="18" y2="13" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="12" y1="16" x2="16" y2="16" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+          <defs>
+            <linearGradient id="mnlLogoGrad" x1="0" y1="0" x2="26" y2="26">
+              <stop offset="0%" stop-color="#a78bfa"/>
+              <stop offset="100%" stop-color="#7c3aed"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <span class="brand-name" id="brandName">Manualize</span>
+        <button id="dashboardBtn" class="icon-btn" title="Dashboard">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+          </svg>
+        </button>
+      </div>
+
+      <input type="text" id="guideTitle" class="guide-title" value="Untitled Guide" placeholder="Guide title…" spellcheck="false">
+
+      <button id="recordBtn" class="record-btn">
+        <span class="record-dot"></span>
+        <span id="recordLabel">Start Recording</span>
+        <span id="stepCount" class="step-count" hidden></span>
+      </button>
+    </header>
+
+    <!-- SAVE INDICATOR -->
+    <div id="saveIndicator" class="save-indicator">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      <span id="saveText">Saved</span>
+    </div>
+
+    <!-- STEP LIST -->
+    <main id="stepList" class="step-list">
+      <div id="emptyState" class="empty-state">
+        <div class="empty-icon">
+          <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+            <rect x="4" y="4" width="48" height="48" rx="12" fill="#f3e8ff" stroke="#d8b4fe" stroke-width="1.5"/>
+            <path d="M20 22h16M20 28h12M20 34h8" stroke="#a78bfa" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="15" cy="22" r="2" fill="#8b5cf6"/>
+            <circle cx="15" cy="28" r="2" fill="#c084fc"/>
+            <circle cx="15" cy="34" r="2" fill="#d8b4fe"/>
+          </svg>
+        </div>
+        <h3>No steps yet</h3>
+        <p>Click <strong>Start Recording</strong> and interact with any webpage to capture steps automatically.</p>
+      </div>
+    </main>
+
+    <!-- EXPORT BAR -->
+    <footer id="exportBar" class="export-bar">
+      <button id="addManualStep" class="export-btn add-btn" title="Add a manual step">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Add Step
+      </button>
+      <div class="export-group">
+        <button id="importJsonBtn" class="export-btn" title="Import guide from JSON">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </button>
+        <button id="exportJsonBtn" class="export-btn" title="Export guide as JSON (backup)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </button>
+        <button id="exportHtml" class="export-btn" title="Export as HTML">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/>
+          </svg>
+          HTML
+        </button>
+        <button id="exportPdf" class="export-btn" title="Export as PDF">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          PDF
+        </button>
+      </div>
+    </footer>
+
+    <!-- PERSISTENCE BAR -->
+    <div class="persistence-bar">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Saved ✓
+    </div>
+  </div>
+
+  <!-- ═══════════ DASHBOARD VIEW ═══════════ -->
+  <div id="dashboardView" class="dashboard" hidden>
+    <header class="dash-header">
+      <button id="backToEditorBtn" class="icon-btn" title="Back to editor">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+        </svg>
+      </button>
+      <h2 class="dash-title">Dashboard</h2>
+      <button id="dashImportBtn" class="icon-btn" title="Import guide" style="margin-left:auto">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      </button>
+      <button id="dashNewGuideBtn" class="icon-btn" title="New guide">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+      </button>
+    </header>
+
+    <!-- Storage Summary -->
+    <div id="dashStorageSummary" class="dash-storage-summary">
+      <div class="storage-bar-track">
+        <div id="storageBarFill" class="storage-bar-fill"></div>
+      </div>
+      <span id="storageLabel" class="storage-label">Calculating…</span>
+    </div>
+
+    <!-- Bulk Actions -->
+    <div id="dashBulkActions" class="dash-bulk-actions" hidden>
+      <label class="dash-select-all">
+        <input type="checkbox" id="dashSelectAll"> Select all
+      </label>
+      <div class="dash-bulk-buttons" style="display: flex; gap: 6px;">
+        <button id="dashBulkExportBtn" class="btn btn-primary btn-sm" style="background: linear-gradient(135deg, var(--purple-600), var(--purple-700)); padding: 5px 10px; font-size: 11.5px;" disabled>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          Export Selected
+        </button>
+        <button id="dashBulkDeleteBtn" class="btn btn-danger btn-sm" disabled>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+          Delete Selected
+        </button>
+      </div>
+    </div>
+
+    <!-- Guide Grid -->
+    <div id="dashGuideList" class="dash-guide-list"></div>
+
+    <!-- Dashboard Footer -->
+    <div class="dash-footer">
+      <button id="dashNewGuideBtnBottom" class="btn btn-primary btn-full">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        New Guide
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════ PDF OPTIONS MODAL ═══════════ -->
+  <div id="pdfModal" class="modal-overlay" hidden>
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2>PDF Layout</h2>
+        <button id="closePdfModal" class="icon-btn close-modal-btn">&times;</button>
+      </div>
+      <div class="pdf-options">
+        <label class="pdf-option">
+          <input type="radio" name="pdfLayout" value="one-per-page" checked>
+          <div class="pdf-option-body">
+            <strong>One step per page</strong>
+            <span>Each step gets a full page with large screenshot</span>
+          </div>
+        </label>
+        <label class="pdf-option">
+          <input type="radio" name="pdfLayout" value="compact">
+          <div class="pdf-option-body">
+            <strong>Compact</strong>
+            <span>Multiple steps per page for shorter documents</span>
+          </div>
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button id="pdfExportConfirm" class="btn btn-primary btn-full">Export PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ CONFIRMATION MODAL ═══════════ -->
+  <div id="confirmModal" class="modal-overlay" hidden>
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2 id="confirmTitle">Confirm Action</h2>
+        <button id="closeConfirmModal" class="icon-btn close-modal-btn">&times;</button>
+      </div>
+      <div class="pdf-options" style="padding: 16px;">
+        <p id="confirmMessage" style="font-size: 12.5px; color: var(--text-secondary); line-height: 1.5;"></p>
+      </div>
+      <div class="modal-footer" style="display: flex; gap: 8px;">
+        <button id="confirmCancelBtn" class="btn btn-full" style="background: var(--slate-100); color: var(--text-primary); border: 1px solid var(--border); font-size:12px;">Cancel</button>
+        <button id="confirmOkBtn" class="btn btn-danger btn-full" style="font-size:12px;">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ SCRIPTS ═══════════ -->
+  <script src="db.js"></script>
+  <script src="lib/jspdf.umd.min.js"></script>
+  <script src="export-html.js"></script>
+  <script src="export-pdf.js"></script>
+  <script src="sidepanel.js"></script>
+</body>
+</html>
