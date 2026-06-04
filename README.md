@@ -1,9 +1,9 @@
-# Manualize
-
 ![Platform](https://img.shields.io/badge/Platform-Chrome%20Extension-blue?logo=googlechrome&logoColor=white)
 ![Manifest Version](https://img.shields.io/badge/Manifest-V3-brightgreen)
 ![Tech Stack](https://img.shields.io/badge/Tech-JS%20%7C%20HTML%20%7C%20CSS-orange)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
+
+<img width="300" height="150" alt="manualize_logo" src="https://github.com/user-attachments/assets/f3690c30-242b-4b68-962f-972a4e40ccce" />
 
 Manualize is a free, offline-first, and privacy-focused Chrome Extension that serves as a direct alternative to Tango and Scribe. It allows you to automatically record step-by-step user guides directly from any webpage, captures element-specific screenshots, and exports them into beautiful HTML or PDF documents.
 
