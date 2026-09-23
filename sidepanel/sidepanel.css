@@ -534,14 +534,16 @@ body { display: flex; flex-direction: column; }
 .export-bar {
   flex-shrink: 0;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  row-gap: 8px;
   padding: 10px 14px;
   background: var(--surface);
   border-top: 1px solid var(--border);
   box-shadow: 0 -1px 4px rgba(124,58,237,.04);
 }
-.export-group { display: flex; gap: 6px; margin-left: auto; }
+.export-group { display: flex; flex-wrap: wrap; gap: 6px; row-gap: 6px; margin-left: auto; }
 .export-btn {
   display: inline-flex;
   align-items: center;
