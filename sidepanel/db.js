@@ -81,6 +81,7 @@ class ManualizeDB {
     const guide = {
       id: crypto.randomUUID(),
       title,
+      brandColor: DEFAULT_BRAND_COLOR,
       createdAt: Date.now(),
       updatedAt: Date.now(),
       stepCount: 0,

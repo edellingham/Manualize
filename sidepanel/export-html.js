@@ -11,6 +11,9 @@ function exportToHtml(guide, steps) {
   const dateStr = new Date(guide.createdAt || Date.now()).toLocaleDateString(undefined, {
     year: 'numeric', month: 'long', day: 'numeric',
   });
+  const brand = guide.brandColor || DEFAULT_BRAND_COLOR;
+  const brandLight = shadeColor(brand, 25);
+  const brandLighter = shadeColor(brand, 55);
 
   const stepsHtml = steps
     .map((step, i) => {
@@ -47,6 +50,7 @@ function exportToHtml(guide, steps) {
     guide: {
       id: guide.id,
       title: guide.title || 'Untitled Guide',
+      brandColor: guide.brandColor || DEFAULT_BRAND_COLOR,
       createdAt: guide.createdAt || Date.now(),
       updatedAt: Date.now(),
       stepCount: steps.length
@@ -80,20 +84,20 @@ function exportToHtml(guide, steps) {
 body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f9f7ff;color:#1e1b4b;line-height:1.6;padding:0 0 60px}
 .container{max-width:780px;margin:0 auto;padding:0 20px}
 .header{text-align:center;margin-bottom:48px;padding-bottom:28px;border-bottom:2px solid #e8e0f0}
-.header h1{font-size:28px;font-weight:800;margin-bottom:6px;background:linear-gradient(135deg,#7c3aed,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;outline:none}
+.header h1{font-size:28px;font-weight:800;margin-bottom:6px;background:linear-gradient(135deg,${brand},${brandLighter});-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;outline:none}
 .header .meta{color:#64748b;font-size:13px}
 .step{display:flex;gap:16px;margin-bottom:24px;padding:20px;background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(124,58,237,.07);border:1px solid #e8e0f0}
-.step.nav-step{border-left:4px solid #c084fc}
-.step-num{flex-shrink:0;width:32px;height:32px;background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+.step.nav-step{border-left:4px solid ${brandLight}}
+.step-num{flex-shrink:0;width:32px;height:32px;background:linear-gradient(135deg,${brandLight},${brand});color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
 .step-body{flex:1;min-width:0}
 .step-title{font-size:15px;font-weight:700;margin-bottom:6px;outline:none;min-height:22px}
 .step-title:empty::before{content:attr(data-placeholder);color:#cbd5e1;font-weight:600}
 .step-desc{font-size:13.5px;color:#475569;margin-bottom:10px;outline:none;min-height:20px}
 .step-desc:empty::before{content:attr(data-placeholder);color:#94a3b8;font-style:italic}
 .step-img{max-width:100%;border-radius:8px;border:1px solid #e8e0f0;margin-bottom:8px;display:block}
-.step-caption{font-size:12.5px;color:#8b5cf6;font-style:italic;outline:none;min-height:18px}
-.step-caption:empty::before{content:attr(data-placeholder);color:#c084fc;font-style:italic;opacity:0.6}
-.step-url{display:inline-block;font-size:11px;color:#8b5cf6;margin-top:6px;text-decoration:none;word-break:break-all}
+.step-caption{font-size:12.5px;color:${brand};font-style:italic;outline:none;min-height:18px}
+.step-caption:empty::before{content:attr(data-placeholder);color:${brandLight};font-style:italic;opacity:0.6}
+.step-url{display:inline-block;font-size:11px;color:${brand};margin-top:6px;text-decoration:none;word-break:break-all}
 .step-url:hover{text-decoration:underline}
 
 /* Edit Banner */
@@ -123,7 +127,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f9f7f
   font-size: 11px;
   letter-spacing: 0.8px;
   text-transform: uppercase;
-  color: #c084fc;
+  color: ${brandLight};
 }
 .banner-desc {
   font-size: 11px;
@@ -146,13 +150,13 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f9f7f
   gap: 6px;
 }
 .btn-html {
-  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  background: linear-gradient(135deg, ${brand}, ${brandLighter});
   color: #fff;
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+  box-shadow: 0 4px 12px ${hexToRgba(brand, 0.3)};
 }
 .btn-html:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(124, 58, 237, 0.45);
+  box-shadow: 0 6px 16px ${hexToRgba(brand, 0.45)};
 }
 .btn-json {
   background: rgba(255, 255, 255, 0.12);

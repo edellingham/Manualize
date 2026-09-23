@@ -41,7 +41,12 @@
         </button>
       </div>
 
-      <input type="text" id="guideTitle" class="guide-title" value="Untitled Guide" placeholder="Guide title…" spellcheck="false">
+      <div class="guide-title-row">
+        <input type="text" id="guideTitle" class="guide-title" value="Untitled Guide" placeholder="Guide title…" spellcheck="false">
+        <label class="brand-color-swatch" title="Brand color for this guide's exports">
+          <input type="color" id="brandColorInput" value="#7c3aed">
+        </label>
+      </div>
 
       <button id="recordBtn" class="record-btn">
         <span class="record-dot"></span>
@@ -252,6 +257,7 @@
   </div>
 
   <!-- ═══════════ SCRIPTS ═══════════ -->
+  <script src="color-utils.js"></script>
   <script src="db.js"></script>
   <script src="screenshot-render.js"></script>
   <script src="lib/jspdf.umd.min.js"></script>

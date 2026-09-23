@@ -104,9 +104,16 @@ body { display: flex; flex-direction: column; }
 .header-brand .icon-btn { margin-left: auto; }
 
 /* ────── Guide Title ────── */
+.guide-title-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  margin-bottom: 10px;
+}
 .guide-title {
   display: block;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   border: 1.5px solid var(--border);
   border-radius: var(--radius-xs);
   padding: 7px 10px;
@@ -117,11 +124,33 @@ body { display: flex; flex-direction: column; }
   background: var(--bg);
   outline: none;
   transition: border-color .2s, box-shadow .2s;
-  margin-bottom: 10px;
 }
 .guide-title:focus {
   border-color: var(--border-focus);
   box-shadow: 0 0 0 3px rgba(192,132,252,.18);
+}
+
+/* ────── Brand Color Swatch ────── */
+.brand-color-swatch {
+  flex-shrink: 0;
+  width: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  overflow: hidden;
+  background: var(--bg);
+}
+.brand-color-swatch input[type="color"] {
+  width: 44px;
+  height: 44px;
+  margin: -6px;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  background: none;
 }
 
 /* ────── Record Button ────── */

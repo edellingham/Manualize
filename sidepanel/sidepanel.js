@@ -16,6 +16,7 @@ const db = new ManualizeDB();
 const editorView = document.getElementById('editorView');
 const dashboardView = document.getElementById('dashboardView');
 const guideTitleInput = document.getElementById('guideTitle');
+const brandColorInput = document.getElementById('brandColorInput');
 const recordBtn = document.getElementById('recordBtn');
 const recordLabel = document.getElementById('recordLabel');
 const stepCountEl = document.getElementById('stepCount');
@@ -91,6 +92,7 @@ async function init() {
   }
 
   guideTitleInput.value = currentGuide.title;
+  syncBrandColorInput();
   renderAllSteps();
   updateRecordingUI();
   updateEmptyState();
@@ -125,6 +127,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 function setupEventListeners() {
   recordBtn.addEventListener('click', toggleRecording);
   guideTitleInput.addEventListener('change', handleTitleSave);
+  brandColorInput.addEventListener('change', handleBrandColorChange);
   exportHtmlBtn.addEventListener('click', handleExportHtml);
   exportPdfBtn.addEventListener('click', showPdfModal);
   exportEmbedBtn.addEventListener('click', handleExportEmbed);
@@ -285,6 +288,7 @@ async function handleNewStep(stepData) {
         vpHeight: stepData.viewportHeight,
         zoom,
         isNav: stepData.isNavigation,
+        accentColor: currentGuide.brandColor || DEFAULT_BRAND_COLOR,
       });
     } catch (e) {
       console.warn('Screenshot crop failed:', e);
@@ -574,6 +578,7 @@ function createZoomControl(step, imgEl) {
           vpHeight: step.viewportHeight,
           zoom: key,
           isNav: step.isNavigation,
+          accentColor: (currentGuide && currentGuide.brandColor) || DEFAULT_BRAND_COLOR,
         });
         step.zoom = key;
         step.screenshotDataUrl = rendered;
@@ -839,6 +844,54 @@ async function createNewGuide() {
   steps = [];
 }
 
+function syncBrandColorInput() {
+  if (!currentGuide) return;
+  brandColorInput.value = currentGuide.brandColor || DEFAULT_BRAND_COLOR;
+}
+
+async function handleBrandColorChange() {
+  if (!currentGuide) return;
+  const newColor = brandColorInput.value;
+  if (newColor === currentGuide.brandColor) return;
+  currentGuide.brandColor = newColor;
+  await db.updateGuide(currentGuide);
+  showSaveIndicator();
+  await recolorScreenshots(newColor);
+}
+
+/** Re-renders every step's crop from its stored full frame with the new
+ * brand color, so screenshots in the exported guide match the new accent
+ * instead of staying purple. Manually-uploaded images have no full frame
+ * or elementRect, so they're left untouched. */
+async function recolorScreenshots(color) {
+  const eligible = steps.filter((s) => s.fullScreenshotDataUrl && s.elementRect);
+  if (eligible.length === 0) return;
+
+  showToast('Updating screenshot colors…');
+  for (const step of eligible) {
+    try {
+      const rendered = await renderStepScreenshot({
+        fullDataUrl: step.fullScreenshotDataUrl,
+        elementRect: step.elementRect,
+        dpr: step.devicePixelRatio || 1,
+        vpWidth: step.viewportWidth,
+        vpHeight: step.viewportHeight,
+        zoom: step.zoom || DEFAULT_ZOOM,
+        isNav: step.isNavigation,
+        accentColor: color,
+      });
+      step.screenshotDataUrl = rendered;
+      await db.updateStep(step.id, { screenshotDataUrl: rendered });
+      const card = stepListEl.querySelector(`[data-step-id="${step.id}"]`);
+      const img = card ? card.querySelector('.step-screenshot') : null;
+      if (img) img.src = rendered;
+    } catch (e) {
+      console.warn('Recolor failed for step', step.id, e);
+    }
+  }
+  showToast('Screenshot colors updated');
+}
+
 async function handleTitleSave() {
   if (!currentGuide) return;
   const newTitle = guideTitleInput.value.trim() || 'Untitled Guide';
@@ -854,6 +907,7 @@ async function loadGuide(guideId) {
   if (!currentGuide) return;
   steps = await db.getSteps(currentGuide.id);
   guideTitleInput.value = currentGuide.title;
+  syncBrandColorInput();
   renderAllSteps();
   updateEmptyState();
   updateRecordingUI();
@@ -1000,6 +1054,7 @@ async function deleteSingleGuide(guideId) {
     } else {
       await createNewGuide();
       guideTitleInput.value = currentGuide.title;
+  syncBrandColorInput();
       steps = [];
       renderAllSteps();
       updateEmptyState();
@@ -1015,6 +1070,7 @@ async function handleNewGuideFromDash() {
   if (isRecording) await stopRecording();
   await createNewGuide();
   guideTitleInput.value = currentGuide.title;
+  syncBrandColorInput();
   steps = [];
   renderAllSteps();
   updateEmptyState();
@@ -1074,6 +1130,7 @@ async function handleBulkDelete() {
       } else {
         await createNewGuide();
         guideTitleInput.value = currentGuide.title;
+  syncBrandColorInput();
         steps = [];
         renderAllSteps();
         updateEmptyState();
@@ -1110,6 +1167,7 @@ async function handleBulkExport() {
           guide: {
             id: guide.id,
             title: guide.title,
+            brandColor: guide.brandColor || DEFAULT_BRAND_COLOR,
             createdAt: guide.createdAt || Date.now(),
             updatedAt: guide.updatedAt || Date.now(),
             stepCount: guideSteps.length
@@ -1346,6 +1404,7 @@ function exportGuideJson(guide, steps) {
     guide: {
       id: guide.id,
       title: guide.title,
+      brandColor: guide.brandColor || DEFAULT_BRAND_COLOR,
       createdAt: guide.createdAt || Date.now(),
       updatedAt: guide.updatedAt || Date.now(),
       stepCount: steps.length
@@ -1459,6 +1518,7 @@ async function importSingleGuideJson(data, isBulk = false) {
     const guide = {
       id: fileGuideId,
       title: data.guide.title || 'Imported Guide',
+      brandColor: data.guide.brandColor || DEFAULT_BRAND_COLOR,
       createdAt: data.guide.createdAt || Date.now(),
       updatedAt: Date.now(),
       stepCount: data.steps.length
@@ -1495,6 +1555,7 @@ async function importSingleGuideJson(data, isBulk = false) {
     const guide = {
       id: targetGuideId,
       title: (data.guide.title || 'Imported Guide') + ' (Copy)',
+      brandColor: data.guide.brandColor || DEFAULT_BRAND_COLOR,
       createdAt: Date.now(),
       updatedAt: Date.now(),
       stepCount: data.steps.length

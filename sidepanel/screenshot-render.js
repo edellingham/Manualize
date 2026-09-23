@@ -54,6 +54,7 @@ function compressFullScreenshot(pngDataUrl, quality = 0.82) {
 function renderStepScreenshot(opts) {
   const { fullDataUrl, elementRect, dpr = 1, vpWidth, vpHeight, isNav } = opts;
   const zoom = ZOOM_LEVELS[opts.zoom] ? opts.zoom : DEFAULT_ZOOM;
+  const accentColor = opts.accentColor || DEFAULT_BRAND_COLOR;
 
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -103,7 +104,7 @@ function renderStepScreenshot(opts) {
         const hlW = elementRect.width * dpr;
         const hlH = elementRect.height * dpr;
 
-        drawTargetAnnotation(ctx, sw, sh, hlX, hlY, hlW, hlH, dpr, zoom);
+        drawTargetAnnotation(ctx, sw, sh, hlX, hlY, hlW, hlH, dpr, zoom, accentColor);
 
         resolve(canvas.toDataURL('image/png'));
       } catch (err) {
@@ -120,7 +121,7 @@ function renderStepScreenshot(opts) {
  * most of the frame) just get the classic outline. Context/full crops get a
  * dimmed spotlight + arrow so the target is findable at a glance.
  */
-function drawTargetAnnotation(ctx, canvasW, canvasH, hlX, hlY, hlW, hlH, dpr, zoom) {
+function drawTargetAnnotation(ctx, canvasW, canvasH, hlX, hlY, hlW, hlH, dpr, zoom, accentColor) {
   const r = 5 * dpr;
   const targetArea = hlW * hlH;
   const canvasArea = canvasW * canvasH;
@@ -137,16 +138,18 @@ function drawTargetAnnotation(ctx, canvasW, canvasH, hlX, hlY, hlW, hlH, dpr, zo
     ctx.fill();
     ctx.restore();
 
+    // Arrow stays a fixed warm color — it needs to read clearly against any
+    // brand color, including ones close to the dimmed overlay's own hue.
     drawArrow(ctx, canvasW, canvasH, hlX, hlY, hlW, hlH, dpr);
   }
 
-  ctx.strokeStyle = 'rgba(139, 92, 246, 0.25)';
+  ctx.strokeStyle = hexToRgba(accentColor, 0.25);
   ctx.lineWidth = 5 * dpr;
   ctx.beginPath();
   ctx.roundRect(hlX - 3, hlY - 3, hlW + 6, hlH + 6, r);
   ctx.stroke();
 
-  ctx.strokeStyle = '#8b5cf6';
+  ctx.strokeStyle = accentColor;
   ctx.lineWidth = 2 * dpr;
   ctx.beginPath();
   ctx.roundRect(hlX - 1, hlY - 1, hlW + 2, hlH + 2, r);
