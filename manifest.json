@@ -1,14 +1,15 @@
 {
   "manifest_version": 3,
   "name": "Manualize",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Automatically record step-by-step guides from any webpage. Free & offline Tango alternative.",
   "permissions": [
     "tabs",
     "scripting",
     "sidePanel",
     "storage",
-    "activeTab"
+    "activeTab",
+    "clipboardWrite"
   ],
   "host_permissions": [
     "<all_urls>"

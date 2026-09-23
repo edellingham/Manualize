@@ -403,6 +403,31 @@ body { display: flex; flex-direction: column; }
 .change-image-btn:hover { background: rgba(30,27,75,.9); }
 .step-image-wrapper:hover .change-image-btn { display: flex; }
 
+/* Zoom control */
+.zoom-control {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+.zoom-btn {
+  flex: 1;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.zoom-btn:hover { background: var(--slate-50); }
+.zoom-btn.active {
+  background: linear-gradient(135deg, var(--purple-600), var(--purple-700));
+  border-color: transparent;
+  color: #fff;
+}
+
 /* Add image placeholder */
 .add-image-area {
   display: flex;

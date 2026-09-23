@@ -23,6 +23,7 @@ const stepListEl = document.getElementById('stepList');
 const emptyStateEl = document.getElementById('emptyState');
 const exportHtmlBtn = document.getElementById('exportHtml');
 const exportPdfBtn = document.getElementById('exportPdf');
+const exportEmbedBtn = document.getElementById('exportEmbed');
 const addManualStepBtn = document.getElementById('addManualStep');
 const dashboardBtn = document.getElementById('dashboardBtn');
 const brandName = document.getElementById('brandName');
@@ -38,6 +39,14 @@ const dashImportBtn = document.getElementById('dashImportBtn');
 const pdfModal = document.getElementById('pdfModal');
 const closePdfModalBtn = document.getElementById('closePdfModal');
 const pdfExportConfirmBtn = document.getElementById('pdfExportConfirm');
+
+// Embed modal refs
+const embedModal = document.getElementById('embedModal');
+const closeEmbedModalBtn = document.getElementById('closeEmbedModal');
+const embedCodeTextarea = document.getElementById('embedCodeTextarea');
+const embedCopyBtn = document.getElementById('embedCopyBtn');
+const embedDownloadBtn = document.getElementById('embedDownloadBtn');
+let currentEmbedResult = null;
 
 // Dashboard refs
 const backToEditorBtn = document.getElementById('backToEditorBtn');
@@ -118,6 +127,7 @@ function setupEventListeners() {
   guideTitleInput.addEventListener('change', handleTitleSave);
   exportHtmlBtn.addEventListener('click', handleExportHtml);
   exportPdfBtn.addEventListener('click', showPdfModal);
+  exportEmbedBtn.addEventListener('click', handleExportEmbed);
   addManualStepBtn.addEventListener('click', () => insertManualStep(steps.length));
   dashboardBtn.addEventListener('click', showDashboard);
   brandName.addEventListener('click', showDashboard);
@@ -138,6 +148,12 @@ function setupEventListeners() {
   closePdfModalBtn.addEventListener('click', () => { pdfModal.hidden = true; });
   pdfModal.addEventListener('click', (e) => { if (e.target === pdfModal) pdfModal.hidden = true; });
   pdfExportConfirmBtn.addEventListener('click', handleExportPdf);
+
+  // Embed modal
+  closeEmbedModalBtn.addEventListener('click', () => { embedModal.hidden = true; });
+  embedModal.addEventListener('click', (e) => { if (e.target === embedModal) embedModal.hidden = true; });
+  embedCopyBtn.addEventListener('click', handleEmbedCopy);
+  embedDownloadBtn.addEventListener('click', handleEmbedDownload);
 
   // Dashboard
   backToEditorBtn.addEventListener('click', showEditor);
@@ -248,17 +264,28 @@ function updateRecordingUI() {
    ═══════════════════════════════════════════════ */
 
 async function handleNewStep(stepData) {
+  let fullScreenshotDataUrl = null;
   let croppedScreenshot = null;
+  const zoom = DEFAULT_ZOOM;
+
   if (stepData.screenshotDataUrl) {
     try {
-      croppedScreenshot = await cropScreenshot(
-        stepData.screenshotDataUrl,
-        stepData.elementRect,
-        stepData.devicePixelRatio || 1,
-        stepData.viewportWidth,
-        stepData.viewportHeight,
-        stepData.isNavigation
-      );
+      fullScreenshotDataUrl = stepData.isNavigation
+        ? null
+        : await compressFullScreenshot(stepData.screenshotDataUrl);
+    } catch (e) {
+      console.warn('Full screenshot compression failed:', e);
+    }
+    try {
+      croppedScreenshot = await renderStepScreenshot({
+        fullDataUrl: stepData.screenshotDataUrl,
+        elementRect: stepData.elementRect,
+        dpr: stepData.devicePixelRatio || 1,
+        vpWidth: stepData.viewportWidth,
+        vpHeight: stepData.viewportHeight,
+        zoom,
+        isNav: stepData.isNavigation,
+      });
     } catch (e) {
       console.warn('Screenshot crop failed:', e);
       croppedScreenshot = stepData.screenshotDataUrl;
@@ -274,6 +301,11 @@ async function handleNewStep(stepData) {
     caption: '',
     selector: stepData.selector,
     screenshotDataUrl: croppedScreenshot,
+    fullScreenshotDataUrl,
+    zoom,
+    devicePixelRatio: stepData.devicePixelRatio || 1,
+    viewportWidth: stepData.viewportWidth,
+    viewportHeight: stepData.viewportHeight,
     pageUrl: stepData.pageUrl,
     pageTitle: stepData.pageTitle,
     elementRect: stepData.elementRect,
@@ -510,7 +542,55 @@ function createImageWrapper(step, index, fileInput) {
   });
 
   wrapper.append(img, changeBtn);
+
+  // Zoom control — only meaningful for auto-captured screenshots (they carry
+  // the full frame + elementRect needed to recompute a crop on demand).
+  if (step.fullScreenshotDataUrl && step.elementRect) {
+    wrapper.appendChild(createZoomControl(step, img));
+  }
+
   return wrapper;
+}
+
+function createZoomControl(step, imgEl) {
+  const control = document.createElement('div');
+  control.className = 'zoom-control';
+
+  Object.keys(ZOOM_LEVELS).forEach((key) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'zoom-btn' + ((step.zoom || DEFAULT_ZOOM) === key ? ' active' : '');
+    btn.textContent = ZOOM_LEVELS[key].label;
+    btn.title = `Zoom: ${ZOOM_LEVELS[key].label}`;
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (btn.classList.contains('active')) return;
+      try {
+        const rendered = await renderStepScreenshot({
+          fullDataUrl: step.fullScreenshotDataUrl,
+          elementRect: step.elementRect,
+          dpr: step.devicePixelRatio || 1,
+          vpWidth: step.viewportWidth,
+          vpHeight: step.viewportHeight,
+          zoom: key,
+          isNav: step.isNavigation,
+        });
+        step.zoom = key;
+        step.screenshotDataUrl = rendered;
+        await db.updateStep(step.id, { zoom: key, screenshotDataUrl: rendered });
+        imgEl.src = rendered;
+        control.querySelectorAll('.zoom-btn').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        showSaveIndicator();
+      } catch (err) {
+        console.warn('Zoom re-render failed:', err);
+        showToast('Could not change zoom');
+      }
+    });
+    control.appendChild(btn);
+  });
+
+  return control;
 }
 
 function createAddImageArea(fileInput) {
@@ -747,73 +827,6 @@ function setupDragAndDrop(card) {
 function clearDragIndicators() {
   stepListEl.querySelectorAll('.step-card').forEach((c) => {
     c.classList.remove('drag-over-top', 'drag-over-bottom');
-  });
-}
-
-/* ═══════════════════════════════════════════════
-   SCREENSHOT CROPPING
-   ═══════════════════════════════════════════════ */
-
-function cropScreenshot(fullDataUrl, elementRect, dpr, vpWidth, vpHeight, isNav) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      try {
-        if (isNav) {
-          const maxW = 800;
-          const scale = Math.min(1, maxW / img.width);
-          const canvas = document.createElement('canvas');
-          canvas.width = img.width * scale;
-          canvas.height = img.height * scale;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          resolve(canvas.toDataURL('image/jpeg', 0.85));
-          return;
-        }
-
-        const padding = 70;
-        const cropX = Math.max(0, elementRect.x - padding);
-        const cropY = Math.max(0, elementRect.y - padding);
-        const cropRight = Math.min(vpWidth, elementRect.x + elementRect.width + padding);
-        const cropBottom = Math.min(vpHeight, elementRect.y + elementRect.height + padding);
-
-        const sx = cropX * dpr;
-        const sy = cropY * dpr;
-        const sw = (cropRight - cropX) * dpr;
-        const sh = (cropBottom - cropY) * dpr;
-
-        const canvas = document.createElement('canvas');
-        canvas.width = sw;
-        canvas.height = sh;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
-
-        // Highlight border
-        const hlX = (elementRect.x - cropX) * dpr;
-        const hlY = (elementRect.y - cropY) * dpr;
-        const hlW = elementRect.width * dpr;
-        const hlH = elementRect.height * dpr;
-        const r = 5 * dpr;
-
-        ctx.strokeStyle = 'rgba(139, 92, 246, 0.25)';
-        ctx.lineWidth = 5 * dpr;
-        ctx.beginPath();
-        ctx.roundRect(hlX - 3, hlY - 3, hlW + 6, hlH + 6, r);
-        ctx.stroke();
-
-        ctx.strokeStyle = '#8b5cf6';
-        ctx.lineWidth = 2 * dpr;
-        ctx.beginPath();
-        ctx.roundRect(hlX - 1, hlY - 1, hlW + 2, hlH + 2, r);
-        ctx.stroke();
-
-        resolve(canvas.toDataURL('image/png'));
-      } catch (err) {
-        reject(err);
-      }
-    };
-    img.onerror = () => reject(new Error('Failed to load screenshot'));
-    img.src = fullDataUrl;
   });
 }
 
@@ -1175,6 +1188,47 @@ async function handleExportPdf() {
   const layout = document.querySelector('input[name="pdfLayout"]:checked')?.value || 'one-per-page';
   exportToPdf(currentGuide, steps, layout);
   showToast('PDF exported!');
+}
+
+async function handleExportEmbed() {
+  if (steps.length === 0) {
+    showToast('No steps to export');
+    return;
+  }
+  await handleTitleSave();
+  currentEmbedResult = buildEmbedSnippet(currentGuide, steps);
+  embedCodeTextarea.value = currentEmbedResult.iframeSnippet;
+  embedModal.hidden = false;
+  embedCodeTextarea.focus();
+  embedCodeTextarea.select();
+}
+
+async function handleEmbedCopy() {
+  if (!currentEmbedResult) return;
+  try {
+    await navigator.clipboard.writeText(currentEmbedResult.iframeSnippet);
+    showToast('Embed code copied!');
+  } catch (_e) {
+    embedCodeTextarea.select();
+    document.execCommand('copy');
+    showToast('Embed code copied!');
+  }
+}
+
+function handleEmbedDownload() {
+  if (!currentEmbedResult) return;
+  const blob = new Blob([currentEmbedResult.standaloneHtml], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = currentEmbedResult.filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    a.remove();
+    URL.revokeObjectURL(url);
+  }, 100);
+  showToast('Embed HTML downloaded!');
 }
 
 /* ═══════════════════════════════════════════════
